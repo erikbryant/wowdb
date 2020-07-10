@@ -1,9 +1,8 @@
-package database
+package wowdb
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
 	"log"
 )
 
@@ -11,13 +10,15 @@ var (
 	db *sql.DB
 )
 
+// Item contains the properties of a single auction house item.
 type Item struct {
-	Id        int64
+	ID        int64
 	Name      string
 	SellPrice int64
 	JSON      string
 }
 
+// Auction contains the properties of a single auction house auction.
 type Auction struct {
 	Auc           int64
 	Item          int64
@@ -31,13 +32,14 @@ type Auction struct {
 	Context       int64
 	HasBonusLists bool
 	HasModifiers  bool
-	PetBreedId    int64
+	PetBreedID    int64
 	PetLevel      int64
-	PetQualityId  int64
-	PetSpeciesId  int64
+	PetQualityID  int64
+	PetSpeciesID  int64
 	JSON          string
 }
 
+// Open opens a connection to the database.
 func Open() {
 	var err error
 
@@ -47,26 +49,29 @@ func Open() {
 	}
 }
 
+// Close closes the connection to the database.
 func Close() {
 	db.Close()
 }
 
+// SaveItem writes the given item to the database.
 func SaveItem(item Item) {
 	sqlString := "INSERT IGNORE INTO items ( id, name, sellPrice, json ) VALUES ( ?, ?, ?, ? )"
 
-	_, err := db.Exec(sqlString, item.Id, item.Name, item.SellPrice, item.JSON)
+	_, err := db.Exec(sqlString, item.ID, item.Name, item.SellPrice, item.JSON)
 	if err != nil {
 		fmt.Println("SaveItem Exec:", err, item)
 	}
 }
 
+// LookupItem looks for the given ID in the database and returns it if found.
 func LookupItem(id int64) (Item, bool) {
 	var item Item
 
 	sqlString := "SELECT * FROM items WHERE id = " + fmt.Sprintf("%d", id) + " LIMIT 1"
 
 	rows := db.QueryRow(sqlString)
-	err := rows.Scan(&item.Id, &item.Name, &item.SellPrice, &item.JSON)
+	err := rows.Scan(&item.ID, &item.Name, &item.SellPrice, &item.JSON)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			fmt.Println("LookupItem Scan:", err, item)
@@ -77,6 +82,7 @@ func LookupItem(id int64) (Item, bool) {
 	return item, true
 }
 
+// SaveAuction writes the given auction to the database.
 func SaveAuction(auction Auction) {
 	var sqlString string
 	var err error
@@ -85,14 +91,14 @@ func SaveAuction(auction Auction) {
 	if current, ok := LookupAuction(auction.Auc); ok {
 		if auction != current {
 			sqlString = "UPDATE auctions SET item = ?, owner = ?, bid = ?, buyout = ?, quantity = ?, timeLeft = ?, rand = ?, seed = ?, context = ?, hasBonusLists = ?, hasModifiers = ?, petBreedId = ?, petLevel = ?, petQualityId = ?, petSpeciesId = ?, json = ? WHERE auc = ?"
-			_, err = db.Exec(sqlString, auction.Item, auction.Owner, auction.Bid, auction.Buyout, auction.Quantity, auction.TimeLeft, auction.Rand, auction.Seed, auction.Context, auction.HasBonusLists, auction.HasModifiers, auction.PetBreedId, auction.PetLevel, auction.PetQualityId, auction.PetSpeciesId, auction.JSON, auction.Auc)
+			_, err = db.Exec(sqlString, auction.Item, auction.Owner, auction.Bid, auction.Buyout, auction.Quantity, auction.TimeLeft, auction.Rand, auction.Seed, auction.Context, auction.HasBonusLists, auction.HasModifiers, auction.PetBreedID, auction.PetLevel, auction.PetQualityID, auction.PetSpeciesID, auction.JSON, auction.Auc)
 			if err != nil {
 				fmt.Println("SaveAuction Exec(UPDATE):", err, auction)
 			}
 		}
 	} else {
 		sqlString = "INSERT INTO auctions ( auc, item, owner, bid, buyout, quantity, timeLeft, rand, seed, context, hasBonusLists, hasModifiers, PetBreedId, petLevel, petQualityId, petSpeciesId, json ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )"
-		_, err = db.Exec(sqlString, auction.Auc, auction.Item, auction.Owner, auction.Bid, auction.Buyout, auction.Quantity, auction.TimeLeft, auction.Rand, auction.Seed, auction.Context, auction.HasBonusLists, auction.HasModifiers, auction.PetBreedId, auction.PetLevel, auction.PetQualityId, auction.PetSpeciesId, auction.JSON)
+		_, err = db.Exec(sqlString, auction.Auc, auction.Item, auction.Owner, auction.Bid, auction.Buyout, auction.Quantity, auction.TimeLeft, auction.Rand, auction.Seed, auction.Context, auction.HasBonusLists, auction.HasModifiers, auction.PetBreedID, auction.PetLevel, auction.PetQualityID, auction.PetSpeciesID, auction.JSON)
 		if err != nil {
 			fmt.Println("SaveAuction Exec(INSERT):", err, auction)
 		}
@@ -100,6 +106,7 @@ func SaveAuction(auction Auction) {
 
 }
 
+// LookupAuction looks for the given auction in the database and returns it if found.
 func LookupAuction(auc int64) (Auction, bool) {
 	var auction Auction
 	var lastUpdated string
@@ -107,7 +114,7 @@ func LookupAuction(auc int64) (Auction, bool) {
 	sqlString := "SELECT * FROM auctions WHERE auc = " + fmt.Sprintf("%d", auc) + " LIMIT 1"
 
 	rows := db.QueryRow(sqlString)
-	err := rows.Scan(&auction.Auc, &auction.Item, &auction.Owner, &auction.Bid, &auction.Buyout, &auction.Quantity, &auction.TimeLeft, &auction.Rand, &auction.Seed, &auction.Context, &auction.HasBonusLists, &auction.HasModifiers, &auction.PetBreedId, &auction.PetLevel, &auction.PetQualityId, &auction.PetSpeciesId, &auction.JSON, &lastUpdated)
+	err := rows.Scan(&auction.Auc, &auction.Item, &auction.Owner, &auction.Bid, &auction.Buyout, &auction.Quantity, &auction.TimeLeft, &auction.Rand, &auction.Seed, &auction.Context, &auction.HasBonusLists, &auction.HasModifiers, &auction.PetBreedID, &auction.PetLevel, &auction.PetQualityID, &auction.PetSpeciesID, &auction.JSON, &lastUpdated)
 	if err != nil {
 		if err != sql.ErrNoRows {
 			fmt.Println("LookupAuction Scan:", err)
@@ -118,6 +125,7 @@ func LookupAuction(auc int64) (Auction, bool) {
 	return auction, true
 }
 
+// countRows returns the number of rows in the given table.
 func countRows(table string) int64 {
 	var count int64
 
@@ -132,10 +140,12 @@ func countRows(table string) int64 {
 	return count
 }
 
+// CountItems returns the number of items stored in the database.
 func CountItems() int64 {
 	return countRows("items")
 }
 
+// CountAuctions returns the number of items stored in the database.
 func CountAuctions() int64 {
 	return countRows("auctions")
 }
