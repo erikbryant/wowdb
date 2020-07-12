@@ -145,7 +145,7 @@ func CountItems() int64 {
 	return countRows("items")
 }
 
-// CountAuctions returns the number of items stored in the database.
+// CountAuctions returns the number of auctions stored in the database.
 func CountAuctions() int64 {
 	return countRows("auctions")
 }
